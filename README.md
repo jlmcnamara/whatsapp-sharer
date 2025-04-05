@@ -5,15 +5,17 @@ A simple Chrome extension to quickly share the current webpage or a specific lin
 ## Features
 
 *   **Toolbar Button:** Click the extension icon in your Chrome toolbar to share the URL of the currently active tab.
-*   **Context Menu:** Right-click on any hyperlink on a webpage and select "Share Link via WhatsApp" to share that specific link.
+*   **Context Menu (Link):** Right-click on any hyperlink on a webpage and select "Share Link via WhatsApp" to share that specific link.
+*   **Context Menu (Highlight):** Select text on a webpage, right-click, and select "Share Highlight via WhatsApp" to share a link that directly points to the selected text.
 
 ## How It Works
 
-The extension uses a background service worker (`background.js`) to listen for two types of events:
+The extension uses a background service worker (`background.js`) to listen for three types of events:
 1.  Clicks on the extension's toolbar icon (`chrome.action.onClicked`).
-2.  Clicks on the custom context menu item added for links (`chrome.contextMenus.onClicked`).
+2.  Clicks on the custom context menu item added for links (`chrome.contextMenus.onClicked` with `menuItemId: 'shareLinkViaWhatsApp'`).
+3.  Clicks on the custom context menu item added for selections (`chrome.contextMenus.onClicked` with `menuItemId: 'shareHighlightViaWhatsApp'`).
 
-When either event occurs, the script retrieves the relevant URL (either the current tab's URL or the clicked link's URL). It then constructs a WhatsApp sharing URL (`https://wa.me/?text=ENCODED_URL`) and opens this URL in a new browser tab. WhatsApp Web or the WhatsApp Desktop application then handles the process of letting the user select the recipient(s).
+When the toolbar icon or the "Share Link" menu item is clicked, the script retrieves the relevant URL (current tab or clicked link). When the "Share Highlight" item is clicked, it retrieves the selected text (`info.selectionText`) and the page URL (`info.pageUrl`), constructs a Text Fragment URL (`pageUrl#:~:text=ENCODED_TEXT`), and opens that.
 
 No user data (like phone numbers or contacts) is stored or handled by the extension itself.
 
@@ -38,7 +40,7 @@ whatsapp-sharer/
 This file defines the extension's properties:
 *   `manifest_version`: Specifies Manifest V3.
 *   `name`, `version`, `description`: Basic identification details.
-*   `permissions`: Requests access to `contextMenus` (to add the right-click option) and `tabs` (to get the current tab URL and open new tabs).
+*   `permissions`: Requests access to `contextMenus` (to add the right-click options), `tabs` (to get the current tab URL and open new tabs), and `scripting` (to access selected text on the page).
 *   `background`: Declares the service worker script (`background.js`).
 *   `action`: Defines the toolbar button, linking it to the icons.
 *   `icons`: Specifies the different icon sizes used by Chrome.
@@ -48,8 +50,8 @@ This file defines the extension's properties:
 This script runs in the background.
 *   It defines the `shareUrlViaWhatsApp(url)` function, which takes a URL, encodes it, constructs the `wa.me` link, and opens it. It includes basic validation for the URL.
 *   It sets up listeners:
-    *   `chrome.runtime.onInstalled`: Creates the context menu item only once when the extension is first installed or updated.
-    *   `chrome.contextMenus.onClicked`: Handles clicks on the "Share Link via WhatsApp" context menu item, calling `shareUrlViaWhatsApp` with the link URL (`info.linkUrl`).
+    *   `chrome.runtime.onInstalled`: Creates *two* context menu items only once when the extension is first installed or updated: one for links (`contexts: ['link']`) and one for selected text (`contexts: ['selection']`).
+    *   `chrome.contextMenus.onClicked`: Handles clicks on *both* context menu items. If the "Share Link" item is clicked, it shares `info.linkUrl`. If the "Share Highlight" item is clicked, it shares a Text Fragment URL constructed from `info.pageUrl` and `info.selectionText`.
     *   `chrome.action.onClicked`: Handles clicks on the toolbar icon, calling `shareUrlViaWhatsApp` with the current tab's URL (`tab.url`). Includes a fallback query if the URL isn't immediately available.
 
 ### 3. Icon Generation (`create_icons.py`)
