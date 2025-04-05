@@ -26,21 +26,42 @@ function shareUrlViaWhatsApp(url) {
 
 // --- Setup and Listeners ---
 
-// 1. Create context menu item on installation
+// 1. Create context menu items on installation
 chrome.runtime.onInstalled.addListener(() => {
+  // Context menu for Links
   chrome.contextMenus.create({
-    id: "shareLinkViaWhatsApp", // Changed ID slightly for clarity
-    title: "Share Link via WhatsApp", // Updated title
-    contexts: ["link"] // Show only when right-clicking a link
+    id: "shareLinkViaWhatsApp",
+    title: "Share Link via WhatsApp",
+    contexts: ["link"]
   });
-  console.log("WhatsApp sharing context menu created.");
+
+  // Context menu for Selected Text
+  chrome.contextMenus.create({
+    id: "shareHighlightViaWhatsApp",
+    title: "Share Highlight via WhatsApp",
+    contexts: ["selection"]
+  });
+
+  console.log("WhatsApp sharing context menus created.");
 });
 
-// 2. Listener for context menu clicks (Right-click on a link)
+// 2. Listener for context menu clicks
 chrome.contextMenus.onClicked.addListener((info, tab) => {
+  // Handle sharing a specific Link
   if (info.menuItemId === "shareLinkViaWhatsApp" && info.linkUrl) {
-    console.log("Context menu clicked. Sharing link URL:", info.linkUrl);
+    console.log("Context menu clicked (Link). Sharing link URL:", info.linkUrl);
     shareUrlViaWhatsApp(info.linkUrl);
+  }
+  // Handle sharing highlighted Text
+  else if (info.menuItemId === "shareHighlightViaWhatsApp" && info.selectionText) {
+    console.log("Context menu clicked (Highlight). Sharing highlight from URL:", info.pageUrl);
+    // Construct the Text Fragment URL
+    // Basic encoding for the text fragment
+    const fragment = encodeURIComponent(info.selectionText.trim());
+    const highlightUrl = `${info.pageUrl}#:~:text=${fragment}`;
+    console.log("Constructed highlight URL:", highlightUrl);
+    shareUrlViaWhatsApp(highlightUrl);
+
   }
 });
 
