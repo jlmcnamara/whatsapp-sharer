@@ -1,6 +1,6 @@
 # Share Link via WhatsApp (Chrome Extension)
 
-A simple Chrome extension to quickly share the current webpage or a specific link via WhatsApp.
+This is a simple and straightforward Chrome extension for sharing links via WhatsApp.
 
 ## Features
 
